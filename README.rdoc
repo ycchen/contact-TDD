@@ -1,0 +1,112 @@
+== README
+
+This README would normally document whatever steps are necessary to get the
+application up and running.
+
+Things you may want to cover:
+
+* Ruby version
+
+* System dependencies
+
+* Configuration
+
+* Database creation
+
+* Database initialization
+
+* How to run the test suite
+
+* Services (job queues, cache servers, search engines, etc.)
+
+* Deployment instructions
+
+* ...
+
+
+Please feel free to use a different markup language if you do not plan to run
+<tt>rake doc:app</tt>.
+
+## This is a contact rails app and will be build by using TDD
+
+# Add testing gems to development and test group in Gemfile
+group :development, :test do
+	gem 'rspec-rails'
+	gem 'factory_girl_rails'
+end
+
+group :test do
+	gem 'facker'
+	gem 'capybara'
+	gem 'database_cleaner'
+	gem 'launchy'
+	gem 'selenium-webdriver'
+end
+
+## create contact model
+
+$ rails g scaffold contact firstname:string lastname:string email:string
+
+$ rake db:migrate
+
+## modified views/layout/application.html.erb
+
+# installing the css stylesheets
+
+$ rails g bootstrap:install static 
+=>
+ insert  app/assets/javascripts/application.js
+ create  app/assets/javascripts/bootstrap.js.coffee
+ create  app/assets/stylesheets/bootstrap_and_overrides.css
+ create  config/locales/en.bootstrap.yml
+   gsub  app/assets/stylesheets/application.css
+   gsub  app/assets/stylesheets/application.css
+
+
+# included twitter/bootstrap in javascripts/application.js
+//= require twitter/bootstrap
+
+## Generating layout and views from twitter_bootstrap_rails
+$ rails g bootstrap:layout [LAYOUT_NAME] [*fixed or fluid]
+
+## Generating phone model
+$ rails g model phone contact:references phone:string phone_type:string
+
+# In order to use nested attributes variables, such as phones, since one contact has many phone number, we will need to use "accepts_nested_attributes_for" in 
+
+models\contract.rb
+
+has_many :phones
+accepts_nested_attributes_for :phones
+
+controllers\contact_controller.rb
+
+def new
+	@contact = Contact.new
+	%w(home office mobile).each do |phone|
+		@contact.phones.build(phone_type: phone)
+	end
+end
+
+def contact_params
+	params.require(:contact).permit(:firstname, :lastname, :email, :phones_attributes =>[:id, :phone, :phone_type])
+end
+
+views\contacts\_form.html.erb
+
+<%= f.fields_for :phones do |builder| %>
+	<%= builder.hidden_field :phone_type %>
+	<%= builder.label :phone, builder.object.phone_type %>
+	<%= builder.text_field :phone %>
+<% end %>
+
+## Generate User model
+$ rails g model user email:string password_digest:string admin:boolean
+
+model\user.rb
+has_secure_password
+validations :email, presence: true, uniqueness: true
+
+# Use ActiveModel has_secure_password
+gem 'bcrypt', '~> 3.1.2'
+gem 'bcrypt-ruby'
